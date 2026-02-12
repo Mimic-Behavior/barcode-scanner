@@ -106,6 +106,10 @@ async function createBarcodeScanner(
         lifecycle.onCreate(ctx)
     }
 
+    let startCallbackProcessed = false
+    document.addEventListener('barcode-scanner:beforestart', () => (startCallbackProcessed = true))
+    document.addEventListener('barcode-scanner:start', () => (startCallbackProcessed = false))
+
     function handleDecode(
         handleDecodeSuccess: DecodeSuccessHandler,
         handleDecodeFailure: DecodeFailureHandler = () => {},
@@ -209,12 +213,12 @@ async function createBarcodeScanner(
         }
     }
 
-    function destroy() {
+    async function destroy() {
         if (state.isDestroyed) {
             return
         }
 
-        stop()
+        await stop()
 
         worker.terminate()
 
@@ -224,6 +228,26 @@ async function createBarcodeScanner(
     async function pause(): Promise<void> {
         if (state.isVideoActive === false || state.isVideoPaused || state.isDestroyed) {
             return
+        }
+
+        if (startCallbackProcessed) {
+            await new Promise((res) => {
+                const timeoutId = setTimeout(() => {
+                    document.removeEventListener('barcode-scanner:start', handleMessage)
+
+                    res(null)
+                }, 1000 * 8)
+
+                const handleMessage = () => {
+                    clearTimeout(timeoutId)
+
+                    document.removeEventListener('barcode-scanner:start', handleMessage)
+
+                    res(null)
+                }
+
+                document.addEventListener('barcode-scanner:start', handleMessage)
+            })
         }
 
         if (lifecycle.onBeforePause) {
@@ -257,6 +281,8 @@ async function createBarcodeScanner(
             throw new Error('handleDecodeSuccess is required')
         }
 
+        document.dispatchEvent(new CustomEvent('barcode-scanner:beforestart'))
+
         if (lifecycle.onBeforeStart) {
             lifecycle.onBeforeStart(ctx)
         }
@@ -284,6 +310,8 @@ async function createBarcodeScanner(
         state.scanArea = getScanArea(state.video)
         state.video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none'
 
+        document.dispatchEvent(new CustomEvent('barcode-scanner:start'))
+
         if (lifecycle.onStart) {
             lifecycle.onStart(ctx)
         }
@@ -292,8 +320,28 @@ async function createBarcodeScanner(
     }
 
     async function stop() {
-        if (state.isVideoActive === false || state.isDestroyed) {
+        if (state.isDestroyed) {
             return
+        }
+
+        if (startCallbackProcessed) {
+            await new Promise((res) => {
+                const timeoutId = setTimeout(() => {
+                    document.removeEventListener('barcode-scanner:start', handleMessage)
+
+                    res(null)
+                }, 1000 * 8)
+
+                const handleMessage = () => {
+                    clearTimeout(timeoutId)
+
+                    document.removeEventListener('barcode-scanner:start', handleMessage)
+
+                    res(null)
+                }
+
+                document.addEventListener('barcode-scanner:start', handleMessage)
+            })
         }
 
         if (lifecycle.onBeforeStop) {
@@ -319,6 +367,7 @@ async function createBarcodeScanner(
         destroy,
         pause,
         start,
+        startCallbackProcessed,
         state,
         stop,
     }
