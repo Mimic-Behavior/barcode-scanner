@@ -1,6 +1,6 @@
 import type { BarcodeFormat } from 'barcode-detector/ponyfill'
 
-import { WORKER_LOAD_FAILURE_CAUSE, WORKER_LOAD_TIMEOUT_CAUSE } from './constants'
+import { BARCODE_SCANNER_DECODE_FRAME_EVENT, WORKER_LOAD_FAILURE_CAUSE, WORKER_LOAD_TIMEOUT_CAUSE } from './constants'
 import { createWorker } from './create-worker'
 import { getCameraAccess, getScanArea as getScanAreaDefault, type ScanArea } from './utils'
 
@@ -106,9 +106,7 @@ async function createBarcodeScanner(
         lifecycle.onCreate(ctx)
     }
 
-    let startCallbackProcessed = false
-    document.addEventListener('barcode-scanner:beforestart', () => (startCallbackProcessed = true))
-    document.addEventListener('barcode-scanner:start', () => (startCallbackProcessed = false))
+    let startPromise: null | Promise<void> = null
 
     function handleDecode(
         handleDecodeSuccess: DecodeSuccessHandler,
@@ -160,7 +158,7 @@ async function createBarcodeScanner(
 
             if (debug) {
                 window.dispatchEvent(
-                    new CustomEvent('barcode-scanner:decode-frame', {
+                    new CustomEvent(BARCODE_SCANNER_DECODE_FRAME_EVENT, {
                         detail: {
                             imageData,
                         },
@@ -230,24 +228,8 @@ async function createBarcodeScanner(
             return
         }
 
-        if (startCallbackProcessed) {
-            await new Promise((res) => {
-                const timeoutId = setTimeout(() => {
-                    document.removeEventListener('barcode-scanner:start', handleMessage)
-
-                    res(null)
-                }, 1000 * 8)
-
-                const handleMessage = () => {
-                    clearTimeout(timeoutId)
-
-                    document.removeEventListener('barcode-scanner:start', handleMessage)
-
-                    res(null)
-                }
-
-                document.addEventListener('barcode-scanner:start', handleMessage)
-            })
+        if (startPromise) {
+            await startPromise.catch((err) => console.error(err))
         }
 
         if (lifecycle.onBeforePause) {
@@ -274,49 +256,53 @@ async function createBarcodeScanner(
         handleDecodeFailure?: DecodeFailureHandler
         handleDecodeSuccess?: DecodeSuccessHandler
     } = {}) {
-        const onDecodeSuccess = rest.handleDecodeSuccess ?? handleDecodeSuccess
-        const onDecodeFailure = rest.handleDecodeFailure ?? handleDecodeFailure
-
-        if (!onDecodeSuccess) {
-            throw new Error('handleDecodeSuccess is required')
-        }
-
-        document.dispatchEvent(new CustomEvent('barcode-scanner:beforestart'))
-
-        if (lifecycle.onBeforeStart) {
-            lifecycle.onBeforeStart(ctx)
-        }
-
-        const hasAccess = await getCameraAccess()
-
-        if (!hasAccess) {
-            throw new Error('No camera access')
-        }
-
-        if (state.video.srcObject instanceof MediaStream) {
+        if (startPromise) {
             return
-        } else {
-            state.video.srcObject = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode,
-                },
-            })
-
-            await state.video.play()
         }
 
-        state.isVideoActive = true
-        state.isVideoPaused = false
-        state.scanArea = getScanArea(state.video)
-        state.video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none'
+        startPromise = (async () => {
+            const onDecodeSuccess = rest.handleDecodeSuccess ?? handleDecodeSuccess
+            const onDecodeFailure = rest.handleDecodeFailure ?? handleDecodeFailure
 
-        document.dispatchEvent(new CustomEvent('barcode-scanner:start'))
+            if (!onDecodeSuccess) {
+                throw new Error('handleDecodeSuccess is required')
+            }
 
-        if (lifecycle.onStart) {
-            lifecycle.onStart(ctx)
-        }
+            if (lifecycle.onBeforeStart) {
+                lifecycle.onBeforeStart(ctx)
+            }
 
-        handleDecode(onDecodeSuccess, onDecodeFailure)
+            const hasAccess = await getCameraAccess()
+
+            if (!hasAccess) {
+                throw new Error('No camera access')
+            }
+
+            if (state.video.srcObject instanceof MediaStream) {
+                return
+            } else {
+                state.video.srcObject = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode,
+                    },
+                })
+
+                await state.video.play()
+            }
+
+            state.isVideoActive = true
+            state.isVideoPaused = false
+            state.scanArea = getScanArea(state.video)
+            state.video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none'
+
+            if (lifecycle.onStart) {
+                lifecycle.onStart(ctx)
+            }
+
+            handleDecode(onDecodeSuccess, onDecodeFailure)
+        })().finally(() => (startPromise = null))
+
+        return startPromise
     }
 
     async function stop() {
@@ -324,24 +310,8 @@ async function createBarcodeScanner(
             return
         }
 
-        if (startCallbackProcessed) {
-            await new Promise((res) => {
-                const timeoutId = setTimeout(() => {
-                    document.removeEventListener('barcode-scanner:start', handleMessage)
-
-                    res(null)
-                }, 1000 * 8)
-
-                const handleMessage = () => {
-                    clearTimeout(timeoutId)
-
-                    document.removeEventListener('barcode-scanner:start', handleMessage)
-
-                    res(null)
-                }
-
-                document.addEventListener('barcode-scanner:start', handleMessage)
-            })
+        if (startPromise) {
+            await startPromise.catch((err) => console.error(err))
         }
 
         if (lifecycle.onBeforeStop) {
@@ -367,11 +337,10 @@ async function createBarcodeScanner(
         destroy,
         pause,
         start,
-        startCallbackProcessed,
         state,
         stop,
     }
 }
 
-export type { DecodeFailureHandler, DecodeSuccessHandler, LifecycleHook, State }
+export type { Context, DecodeFailureHandler, DecodeSuccessHandler, Lifecycle, LifecycleHook, Options, State }
 export { createBarcodeScanner }

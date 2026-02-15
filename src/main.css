@@ -44,9 +44,11 @@ body {
     pointer-events: none;
     border: 2px dashed #fff;
     border-radius: 16px;
+    transform: scale(var(--barcode-scanner-area-detected-scale, 1));
+    transform-origin: center;
     transition-timing-function: ease-in-out;
     transition-duration: 0.2s;
-    transition-property: top, left, width, height;
+    transition-property: top, left, width, height, transform;
 }
 
 .demo__video-preview {

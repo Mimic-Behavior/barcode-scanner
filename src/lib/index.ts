@@ -1,6 +1,17 @@
-import { createBarcodeScanner } from './create-barcode-scanner'
+import {
+    type Context,
+    createBarcodeScanner,
+    type DecodeFailureHandler,
+    type DecodeSuccessHandler,
+    type Lifecycle,
+    type LifecycleHook,
+    type Options,
+    type State,
+} from './create-barcode-scanner'
 
-export { createWorker } from './create-worker'
+export * from './constants'
+export * from './create-worker'
 export * from './utils'
+export type { Context, DecodeFailureHandler, DecodeSuccessHandler, Lifecycle, LifecycleHook, Options, State }
 export { createBarcodeScanner }
 export default createBarcodeScanner

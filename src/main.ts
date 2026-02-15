@@ -31,13 +31,18 @@ function delAreaVariable(element: HTMLElement, name: string) {
     element.style.removeProperty(`--${name}-width`)
     element.style.removeProperty(`--${name}-x`)
     element.style.removeProperty(`--${name}-y`)
+    element.style.removeProperty(`--${name}-scale`)
 }
 
-function setAreaVariable(element: HTMLElement, name: string, area: ScanArea) {
+function setAreaVariable(element: HTMLElement, name: string, area: ScanArea, scale?: number) {
     element.style.setProperty(`--${name}-height`, `${area.height}px`)
     element.style.setProperty(`--${name}-width`, `${area.width}px`)
     element.style.setProperty(`--${name}-x`, `${area.x}px`)
     element.style.setProperty(`--${name}-y`, `${area.y}px`)
+
+    if (scale) {
+        element.style.setProperty(`--${name}-scale`, `${scale}`)
+    }
 }
 
 if (video && videoContainer) {
@@ -59,7 +64,7 @@ if (video && videoContainer) {
                 return
             }
 
-            delAreaVariable(video, 'barcode-scanner-area-detected')
+            delAreaVariable(video.parentElement!, 'barcode-scanner-area-detected')
 
             resultValue.textContent = 'No data'
         },
@@ -68,10 +73,15 @@ if (video && videoContainer) {
                 return
             }
 
+            const scanArea = barcodeScanner.state.scanArea
+            const scaleX = Math.max(1, (scanArea.width * (3 / 4)) / area.width)
+            const scaleY = Math.max(1, (scanArea.height * (3 / 4)) / area.height)
+
             setAreaVariable(
                 video.parentElement!,
                 'barcode-scanner-area-detected',
                 translateAreaToVideoRender(video, area),
+                Math.max(scaleX, scaleY),
             )
 
             if (checkboxAlertOnSuccess?.checked) {
