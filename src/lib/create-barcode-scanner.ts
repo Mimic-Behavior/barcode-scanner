@@ -189,9 +189,13 @@ async function createBarcodeScanner(
                 if (err) {
                     console.error(err)
 
+                    // prettier-ignore
                     if (
                         err instanceof Error &&
-                        (err.cause === WORKER_LOAD_FAILURE_CAUSE || err.cause === WORKER_LOAD_TIMEOUT_CAUSE)
+                        (
+                            err.message === WORKER_LOAD_FAILURE_CAUSE ||
+                            err.message === WORKER_LOAD_TIMEOUT_CAUSE
+                        )
                     ) {
                         state.isWorkerLoadFailure = true
                     }
