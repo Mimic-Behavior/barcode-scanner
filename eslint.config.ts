@@ -1,25 +1,11 @@
-import js from '@eslint/js'
-import perfectionist from 'eslint-plugin-perfectionist'
-import prettier from 'eslint-plugin-prettier/recommended'
-import { defineConfig } from 'eslint/config'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
+import { createConfig } from '@mimic-behavior/eslint-config'
 
-export default defineConfig([
-    {
-        extends: ['js/recommended'],
-        files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
-        languageOptions: {
-            globals: {
-                ...globals.browser,
-                ...globals.node,
-            },
-        },
-        plugins: {
-            js,
-        },
+export default createConfig({
+    plugins: {
+        json: true,
+        perfectionist: true,
+        sonarjs: true,
+        typescript: true,
+        yaml: true,
     },
-    tseslint.configs.recommended,
-    perfectionist.configs['recommended-alphabetical'],
-    prettier,
-])
+})
