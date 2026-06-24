@@ -10,7 +10,7 @@ export default defineConfig({
             entry: path.resolve(__dirname, 'src/lib/index.ts'),
             formats: ['es'],
         },
-        rollupOptions: {
+        rolldownOptions: {
             output: {
                 assetFileNames(chunkInfo) {
                     return `${path.basename(chunkInfo.names[0], path.extname(chunkInfo.names[0])).replace('_', '-')}.[ext]`
@@ -19,7 +19,7 @@ export default defineConfig({
             },
         },
     },
-    plugins: [dts({ rollupTypes: true, tsconfigPath: './tsconfig.lib.json' })],
+    plugins: [dts({ bundleTypes: true, tsconfigPath: './tsconfig.lib.json' })],
     server: {
         host: true,
     },

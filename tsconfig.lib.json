@@ -1,4 +1,7 @@
 {
+    "compilerOptions": {
+        "rootDir": "./src/lib"
+    },
     "extends": ["./tsconfig.app.json"],
     "include": ["./src/lib"]
 }
