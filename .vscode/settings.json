@@ -1,7 +1,12 @@
 {
-    "biome.enabled": false,
     "cSpell.language": "en,ru",
-    "cSpell.words": ["barcodes", "domutils", "jsqr", "zxing"],
+    "cSpell.words": [
+        "barcodes",
+        "domutils",
+        "jsqr",
+        "sonarjs",
+        "zxing"
+    ],
     "editor.codeActionsOnSave": {
         "source.fixAll": "explicit"
     },

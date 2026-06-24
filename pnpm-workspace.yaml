@@ -1,2 +1,5 @@
 allowBuilds:
-  esbuild: set this to true or false
+    esbuild: set this to true or false
+minimumReleaseAgeExclude:
+    - '@mimic-behavior/eslint-config@0.7.0'
+    - eslint-plugin-yml@3.5.0
