@@ -1,5 +1,5 @@
 {
-    "name": "@nddeps/barcode-scanner",
+    "name": "@mimic-behavior/barcode-scanner",
     "version": "0.6.2",
     "private": false,
     "keywords": [
@@ -7,10 +7,10 @@
         "scanner",
         "barcode-scanner"
     ],
-    "homepage": "https://github.com/No-Deprecated-Dependencies/barcode-scanner",
+    "homepage": "https://github.com/mimic-behavior/barcode-scanner",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/No-Deprecated-Dependencies/barcode-scanner.git"
+        "url": "git+https://github.com/mimic-behavior/barcode-scanner.git"
     },
     "license": "MIT",
     "author": "Aleksei Saenko",
